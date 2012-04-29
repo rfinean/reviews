@@ -1,4 +1,4 @@
-reviews
-=======
+#Reviews for Places
 
-Aggregator of all reviews for a particular business (eg cafe or restaurant)
+Aggregates all reviews we can find for a particular business (eg cafe or restaurant)
+from numerous places (Qype, Yelp, Trip Advisor, etc...) into one mobile web page
