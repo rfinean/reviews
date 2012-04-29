@@ -158,10 +158,12 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		// display only if there is a <div class="m">, which contains the 5* rating
 		if (get_class($review) != "DOMElement") continue;
 		
-		// find the URL
+		// find and extract from Google Wireless Transcoder URL
 		$reviewSite = $review->getElementsByTagName("a");
 		if (!$reviewSite) continue;
 		$reviewSite = $reviewSite->item(0)->getAttribute("href");
+		preg_match("/&u=(.*)$/", $reviewSite, $realURL);
+		$reviewSite = urldecode($realURL[1]);
 		?><li data-theme="d"><a href="<?php echo $reviewSite; ?>" data-transition="slide"><?php
 		echo $dom->saveXML($review);
 		?></a></li><?php
