@@ -16,7 +16,7 @@ define(PLACES_URL, "http://www.google.co.uk/m/search?q=");
 /**
  * @var string Referrer URL to give to Google Places
  */
-define(REFERRER_URL, $_SERVER['HTTP_HOST']);
+define(REFERRER_URL, "http://" . $_SERVER['HTTP_HOST'] . "/");
 
 /**
  * @var string Nokia Symbian User-Agent forces Google to format simply for mobile
@@ -45,7 +45,7 @@ define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; 
 		curl_setopt($proxyGet, CURLOPT_CONNECTTIMEOUT, $maxDelay);
 		curl_setopt($proxyGet, CURLOPT_USERAGENT,
 			$userAgent ? $userAgent : $_SERVER["HTTP_USER_AGENT"]);
-//		curl_setopt($proxyGet, CURLOPT_REFERER, REFERRER_URL);
+		curl_setopt($proxyGet, CURLOPT_REFERER, REFERRER_URL);
 		curl_setopt($proxyGet, CURLOPT_HTTPHEADER, array(
 			'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 			'Accept-Charset: utf-8',
@@ -63,29 +63,21 @@ define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; 
 	}
 	
 	/**
-	 * Returns a new tidy tree of the XHTML source
+	 * Returns a new DOM of the XHTML source
 	 *
 	 * Accepts only Character-Encoding: UTF-8 source and converts it
 	 * to pure ASCII that can be inserted into pages of any
 	 * Character-Encoding.
 	 *
-	 * @see http://php.net/tidy
+	 * @see http://php.net/dom
 	 *
-	 * @param string $bannerXHTML source HTML to parse
-	 * @return tidy:: Tidied XHTML tree
+	 * @param string $sourceXHTML source HTML to parse
+	 * @return DOMDocument:: Tidied XHTML tree
 	 */
-	function parseTidy($bannerXHTML)
+	function parseDOM($sourceXHTML)
 	{
-		$tidy = new tidy();
-		$config = array(
-				'output-xhtml' => true,
-				'doctype' => "strict",
-				//			'clean' => true,
-				'preserve-entities' => true,
-				'numeric-entities' => true,
-				'char-encoding' => "ascii",
-				'wrap' => 0);
-		if (!$tidy->parseString(charset_decode_utf_8($bannerXHTML), $config))
+		$tidy = new DOMDocument();
+		if (!$tidy->loadHTML(charset_decode_utf_8($sourceXHTML)))
 			return null;
 		return $tidy;
 	}
@@ -115,34 +107,7 @@ define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; 
 	
 	    return $string; 
 	}	
-	
-	/**
-	 * Returns the block of the tag type specified.
-	 *
-	 * Recursive method accepts a node tree and name to find
-	 * then returns the matching node.
-	 *
-	 * @see http://php.net/tidy
-	 *
-	 * @param NODE_TYPE $findTag TIDY_TAG_ type of tag to find
-	 * @param tidyNode:: $node TidyNode to walk DOM from
-	 * @param string $attName name of attribute to check
-	 * @param string $attValue value of attribute to find
-	 * @return tidyNode:: "findTag" node or null if not found
-	 */
-	function findElement($findTag, $node, $attName, $attValue)
-	{
-		if ($node->id == $findTag
-			&& (!$attName || $node->attribute[$attName] == $attValue)) return $node;
-		if ($node->hasChildren())
-			foreach($node->child as $child)
-			{
-				$found = findElement($findTag, $child, $attName, $attValue);
-				if ($found) return $found;
-			}
-			return null;
-	}
-	
+		
 	function cantContinue($backupURL)
 	{
 		header("HTTP/1.1 302 Found");
@@ -151,42 +116,59 @@ define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; 
 	}
 
 	$place = $_GET['q'];	
-	$searchURL = PLACES_URL . urlencode($place);
-	
-//	echo $searchURL;	exit;
-	
+	$searchURL = PLACES_URL . urlencode($place);	
 	$searchResults = httpRequest($searchURL, 3, null, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configuration/CLDC-1.1");
-
-//	echo $searchResults;	exit;
 	
-	
-	// Parse results with tidy()
-	$tidy = parseTidy($searchResults);
-	if (!$tidy) {
+	// Parse results with DOM
+	$dom = new DOMDocument();
+	if (!$dom->loadHTML($searchResults)) {
 		cantContinue($searchURL);
 	}
-	// Find the div tag with id="universal"
-	$node = findElement(TIDY_TAG_DIV, $tidy->root(), "id", "universal");
-	if (!$node) {
+	$list = $dom->getElementById("universal");
+
+	if (!$list) {
 		cantContinue($searchURL);
 	}
 
+//	echo $dom->saveXML($list); exit;
+	
+	
+	
 	// Definitely have something to run with now...
 	header("Cache-Control: max-age=300");	// cache 5 minutes
-	?>
+	echo '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
+?>
 <!DOCTYPE html> 
 <html><head>
-	<title>Reviews</title> 
+	<title><?php echo $place; ?> reviews</title> 
 	<meta name="viewport" content="width=device-width, initial-scale=1"> 
-<!--
-	<link rel="stylesheet" href="styles/jquery.mobile-1.0.1.min.css" />
-	<script src="scripts/jquery-1.7.1.min.js"></script>
-	<script src="scripts/jquery.mobile-1.0.1.min.js"></script>
-	<script src="scripts/knockout-2.0.0.js"></script>
--->
-	</head><body> 
-	<?php
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.css" />
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.js"></script>
+</head><body> 
+<div data-role="page" id="reviews">
+    <div data-theme="a" data-role="header">
+        <h3>Reviews</h3>
+    </div>
+    <div data-role="content">
 
-	echo $node;
-	?>
+<?php
+
+	echo $dom->saveXML($list);
+
+?>
+	</div>
+</div>
+<script type="text/javascript">
+var GoSquared={};
+GoSquared.acct = "GSN-621961-O";
+(function(w){
+	function gs(){
+		w._gstc_lt=+(new Date); var d=document;
+		var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
+		var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
+	}
+	w.addEventListener?w.addEventListener("load",gs,false):w.attachEvent("onload",gs);
+})(window);
+</script>
 </body></html>
