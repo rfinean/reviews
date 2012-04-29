@@ -21,8 +21,10 @@ define(REFERRER_URL, "http://" . $_SERVER['HTTP_HOST'] . "/");
 /**
  * @var string Nokia Symbian User-Agent forces Google to format simply for mobile
  */
-define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; Profile/MIDP-2.0 Configuration/CLDC-1.1 ) AppleWebKit/413 (KHTML, like Gecko) Safari/413");
-
+//define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; Profile/MIDP-2.0 Configuration/CLDC-1.1 ) AppleWebKit/413 (KHTML, like Gecko) Safari/413");
+//define(MOBILE_UA, "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7");
+define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configuration/CLDC-1.1");
+		
 	/**
 	 * Retrieves HTTP response from a URL.
 	 * Warning: This is a comparatively slow function that may wait maxDelay
@@ -117,7 +119,7 @@ define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; 
 
 	$place = $_GET['q'];	
 	$searchURL = PLACES_URL . urlencode($place);	
-	$searchResults = httpRequest($searchURL, 3, null, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configuration/CLDC-1.1");
+	$searchResults = httpRequest($searchURL, 3, null, MOBILE_UA);
 	
 	// Parse results with DOM
 	$dom = new DOMDocument();
@@ -154,17 +156,16 @@ define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; 
 
 	foreach ($list->childNodes as $review) {
 		// display only if there is a <div class="m">, which contains the 5* rating
+		if (get_class($review) != "DOMElement") continue;
+		
 		// find the URL
-//		echo "type " . get_class($review);
-		if (get_class($review) == "DOMElement") {
-			$reviewSite = $review->getElementsByTagName("a");
-			if ($reviewSite) {
-				$reviewSite = "http://google.com" . $reviewSite->item(0)->getAttribute("href");
-				?><li data-theme="d"><a href="<?php echo $reviewSite; ?>" data-transition="slide"><?php
-				echo $dom->saveXML($review);
-				?></a></li><?php
-			}
-		}
+		$reviewSite = $review->getElementsByTagName("a");
+		if (!$reviewSite) continue;
+		$reviewSite = $reviewSite->item(0)->getAttribute("href");
+		?><li data-theme="d"><a href="<?php echo $reviewSite; ?>" data-transition="slide"><?php
+		echo $dom->saveXML($review);
+		?></a></li><?php
+		
 	}
 
 ?>
