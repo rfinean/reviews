@@ -132,8 +132,6 @@ define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; 
 
 //	echo $dom->saveXML($list); exit;
 	
-	
-	
 	// Definitely have something to run with now...
 	header("Cache-Control: max-age=300");	// cache 5 minutes
 	echo '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
@@ -146,17 +144,31 @@ define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; 
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 	<script src="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.js"></script>
 </head><body> 
-<div data-role="page" id="reviews">
+<div data-theme="e" data-role="page" id="reviews">
     <div data-theme="a" data-role="header">
         <h3>Reviews</h3>
     </div>
     <div data-role="content">
-
+		<ul data-role="listview" data-divider-theme="d" data-inset="true">
 <?php
 
-	echo $dom->saveXML($list);
+	foreach ($list->childNodes as $review) {
+		// display only if there is a <div class="m">, which contains the 5* rating
+		// find the URL
+//		echo "type " . get_class($review);
+		if (get_class($review) == "DOMElement") {
+			$reviewSite = $review->getElementsByTagName("a");
+			if ($reviewSite) {
+				$reviewSite = "http://google.com" . $reviewSite->item(0)->getAttribute("href");
+				?><li data-theme="d"><a href="<?php echo $reviewSite; ?>" data-transition="slide"><?php
+				echo $dom->saveXML($review);
+				?></a></li><?php
+			}
+		}
+	}
 
 ?>
+		</ul>
 	</div>
 </div>
 <script type="text/javascript">
