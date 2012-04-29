@@ -157,7 +157,18 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 	foreach ($list->childNodes as $review) {
 		// display only if there is a <div class="m">, which contains the 5* rating
 		if (get_class($review) != "DOMElement") continue;
-		
+		$rating = null;
+		$website = null;
+		$components = $review->getElementsByTagName("div");
+		foreach ($components as $div) {
+			if ($div->getAttribute("class") == "m") {
+				$rating = $dom->saveXML($div);
+			}
+			if ($div->getAttribute("class") == "kd") {
+				$website = $dom->saveXML($div);
+			}
+		}
+		if (!$rating) continue;
 		// find and extract from Google Wireless Transcoder URL
 		$reviewSite = $review->getElementsByTagName("a");
 		if (!$reviewSite) continue;
@@ -165,7 +176,8 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		preg_match("/&u=(.*)$/", $reviewSite, $realURL);
 		$reviewSite = urldecode($realURL[1]);
 		?><li data-theme="d"><a href="<?php echo $reviewSite; ?>" data-transition="slide"><?php
-		echo $dom->saveXML($review);
+//		echo $dom->saveXML($review);
+		echo $website . $rating;
 		?></a></li><?php
 		
 	}
