@@ -143,17 +143,14 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 	<title><?php echo $place; ?> reviews</title> 
 	<meta name="viewport" content="width=device-width, initial-scale=1"> 
     <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.css" />
+    <style>a.ui-link-inherit{white-space:normal!important}</style>
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 	<script src="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.js"></script>
 </head><body> 
 <div data-theme="e" data-role="page" id="reviews">
-    <div data-theme="a" data-role="header">
-        <h3>Reviews</h3>
-    </div>
     <div data-role="content">
-		<ul data-role="listview" data-divider-theme="d" data-inset="true">
+		<ul data-role="listview" data-divider-theme="d" data-inset="false">
 <?php
-
 	foreach ($list->childNodes as $review) {
 		// display only if there is a <div class="m">, which contains the 5* rating
 		if (get_class($review) != "DOMElement") continue;
@@ -163,25 +160,24 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		foreach ($components as $div) {
 			if ($div->getAttribute("class") == "m") {
 				$rating = $dom->saveXML($div);
-			}
-			if ($div->getAttribute("class") == "kd") {
-				$website = $dom->saveXML($div);
+				break;
 			}
 		}
 		if (!$rating) continue;
-		// find and extract from Google Wireless Transcoder URL
+		// find review URL and extract from Google Wireless Transcoder if neccessary
 		$reviewSite = $review->getElementsByTagName("a");
 		if (!$reviewSite) continue;
 		$reviewSite = $reviewSite->item(0)->getAttribute("href");
-		preg_match("/&u=(.*)$/", $reviewSite, $realURL);
-		$reviewSite = urldecode($realURL[1]);
+		if (preg_match("#^/gwt/.*&u=(.*)$#", $reviewSite, $realURL)) {
+			$reviewSite = urldecode($realURL[1]);
+		}
+		preg_match("#http://([a-zA-Z0-9\-\.]+)#", $reviewSite, $realURL);
+		$website = $realURL[1];
 		?><li data-theme="d"><a href="<?php echo $reviewSite; ?>" data-transition="slide"><?php
 //		echo $dom->saveXML($review);
 		echo $website . $rating;
 		?></a></li><?php
-		
 	}
-
 ?>
 		</ul>
 	</div>
