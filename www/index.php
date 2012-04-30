@@ -8,22 +8,23 @@
  */
 
 /**
- * @var string Google Places search URL to find reviews. Bing and Y! are no good at this.
+ * @var string Google search URL to find reviews. Bing and Y! are no good at this.
  */
+//define(PLACES_URL, "http://www.google.com/m/search?q=");
 define(PLACES_URL, "http://www.google.co.uk/m/search?q=");
 //define(PLACES_URL, "http://maps.google.co.uk/maps/place?q=");
 
 /**
- * @var string Referrer URL to give to Google Places
+ * @var string Referrer URL to give to Google
  */
 define(REFERRER_URL, "http://" . $_SERVER['HTTP_HOST'] . "/");
 
 /**
- * @var string Nokia Symbian User-Agent forces Google to format simply for mobile
+ * @var string Nokia non-WebKit User-Agent forces Google to format static XHTML for mobile
  */
+define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configuration/CLDC-1.1");
 //define(MOBILE_UA, "Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 Nokia6120c/6.01; Profile/MIDP-2.0 Configuration/CLDC-1.1 ) AppleWebKit/413 (KHTML, like Gecko) Safari/413");
 //define(MOBILE_UA, "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7");
-define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configuration/CLDC-1.1");
 		
 	/**
 	 * Retrieves HTTP response from a URL.
@@ -56,7 +57,7 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		if ($postData)
 		{
 			curl_setopt($proxyGet, CURLOPT_HTTPHEADER, array(
-				'Content_Type: application/x_www_form_urlencoded', 'Connection: Close'));
+				'Content_Type: application/x_www_form_urlencoded'));
 			curl_setopt($proxyGet, CURLOPT_POSTFIELDS, $postData);
 		}
 		$responseBody = curl_exec($proxyGet);
@@ -64,52 +65,6 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		return $responseBody;
 	}
 	
-	/**
-	 * Returns a new DOM of the XHTML source
-	 *
-	 * Accepts only Character-Encoding: UTF-8 source and converts it
-	 * to pure ASCII that can be inserted into pages of any
-	 * Character-Encoding.
-	 *
-	 * @see http://php.net/dom
-	 *
-	 * @param string $sourceXHTML source HTML to parse
-	 * @return DOMDocument:: Tidied XHTML tree
-	 */
-	function parseDOM($sourceXHTML)
-	{
-		$tidy = new DOMDocument();
-		if (!$tidy->loadHTML(charset_decode_utf_8($sourceXHTML)))
-			return null;
-		return $tidy;
-	}
-	
-	/**
-	 * Converts UTF-8 encoded string to ASCII with &#xxxx; unicode entities
-	 * 
-	 * @param string $string source UTF-8 string
-	 * @return string ASCII HTML string
-	 */
-	function charset_decode_utf_8($string)
-	{ 
-	    // Only do the slow convert if there are 8-bit characters
-	    // avoid using 0xA0 (\240) in ereg ranges. RH73 does not like that
-	    if (!ereg("[\200-\237]", $string) and !ereg("[\241-\377]", $string)) 
-	        return $string; 
-	
-	    // decode three byte unicode characters 
-	    $string = preg_replace("/([\340-\357])([\200-\277])([\200-\277])/e",        
-	    "'&#'.((ord('\\1')-224)*4096 + (ord('\\2')-128)*64 + (ord('\\3')-128)).';'",    
-	    $string); 
-	
-	    // decode two byte unicode characters 
-	    $string = preg_replace("/([\300-\337])([\200-\277])/e", 
-	    "'&#'.((ord('\\1')-192)*64+(ord('\\2')-128)).';'", 
-	    $string); 
-	
-	    return $string; 
-	}	
-		
 	function cantContinue($backupURL)
 	{
 		header("HTTP/1.1 302 Found");
@@ -119,7 +74,7 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 
 	$place = $_GET['q'];	
 	$searchURL = PLACES_URL . urlencode($place);	
-	$searchResults = httpRequest($searchURL, 3, null, MOBILE_UA);
+	$searchResults = httpRequest($searchURL, 4, null, MOBILE_UA);
 	
 	// Parse results with DOM
 	$dom = new DOMDocument();
@@ -140,16 +95,17 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 ?>
 <!DOCTYPE html> 
 <html><head>
-	<title><?php echo $place; ?> reviews</title> 
-	<meta name="viewport" content="width=device-width, initial-scale=1"> 
-    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.css" />
-    <style>a.ui-link-inherit{white-space:normal!important}</style>
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
-	<script src="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.js"></script>
+<title><?php echo $place; ?> reviews</title> 
+<meta name="viewport" content="width=device-width, initial-scale=1"> 
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.css" />
+<style>.m{font-weight:normal}</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+<script>$(document).bind("mobileinit",function(){$.mobile.ajaxEnabled=false;});</script>
+<script src="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.js"></script>
 </head><body> 
 <div data-theme="e" data-role="page" id="reviews">
     <div data-role="content">
-		<ul data-role="listview" data-divider-theme="d" data-inset="false">
+		<ul data-role="listview">
 <?php
 	foreach ($list->childNodes as $review) {
 		// display only if there is a <div class="m">, which contains the 5* rating
@@ -170,10 +126,12 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		$reviewSite = $reviewSite->item(0)->getAttribute("href");
 		if (preg_match("#^/gwt/.*&u=(.*)$#", $reviewSite, $realURL)) {
 			$reviewSite = urldecode($realURL[1]);
+		} else if (preg_match("#^/m/url.*&q=(.*)$#", $reviewSite, $realURL)) {
+			$reviewSite = urldecode($realURL[1]);
 		}
 		preg_match("#http://([a-zA-Z0-9\-\.]+)#", $reviewSite, $realURL);
 		$website = $realURL[1];
-		?><li data-theme="d"><a href="<?php echo $reviewSite; ?>" data-transition="slide"><?php
+		?><li data-theme="d"><a href="<?php echo $reviewSite; ?>" style="white-space:normal"><?php
 //		echo $dom->saveXML($review);
 		echo $website . $rating;
 		?></a></li><?php
