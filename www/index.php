@@ -1,6 +1,6 @@
 <?php
 /**
- * index.php aggregates reviews of a place using Google Places search
+ * index.php aggregates reviews of a place using Google search
  *
  * @author		Rob Finean	<rfinean@iee.org>
  *
@@ -87,7 +87,7 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		cantContinue($searchURL);
 	}
 
-//	echo $dom->saveXML($list); exit;
+//	echo $dom->saveXML($list); exit;	// debug
 	
 	// Definitely have something to run with now...
 	header("Cache-Control: max-age=300");	// cache 5 minutes
@@ -100,7 +100,6 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.css" />
 <style>.m{font-weight:normal}</style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
-<script>$(document).bind("mobileinit",function(){$.mobile.ajaxEnabled=false;});</script>
 <script src="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.js"></script>
 </head><body> 
 <div data-theme="e" data-role="page" id="reviews">
@@ -132,7 +131,7 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		preg_match("#http://([a-zA-Z0-9\-\.]+)#", $reviewSite, $realURL);
 		$website = $realURL[1];
 		?><li data-theme="d"><a href="<?php echo $reviewSite; ?>" style="white-space:normal"><?php
-//		echo $dom->saveXML($review);
+//		echo $dom->saveXML($review);	// debug
 		echo $website . $rating;
 		?></a></li><?php
 	}
@@ -140,16 +139,15 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		</ul>
 	</div>
 </div>
-<script type="text/javascript">
-var GoSquared={};
-GoSquared.acct = "GSN-621961-O";
-(function(w){
-	function gs(){
-		w._gstc_lt=+(new Date); var d=document;
-		var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
-		var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
-	}
-	w.addEventListener?w.addEventListener("load",gs,false):w.attachEvent("onload",gs);
-})(window);
+<script>
+var _gaq = [['_setAccount', 'UA-31436816-1'], ['_trackPageview']];
+(function(ga, s) {
+	ga.async = true;
+	ga.src = 'http://www.google-analytics.com/ga.js';
+	s.parentNode.insertBefore(ga, s);
+}(
+	document.createElement('script'),
+	document.getElementsByTagName('script')[0]
+));
 </script>
 </body></html>
