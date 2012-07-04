@@ -72,7 +72,11 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		exit;		
 	}
 
-	$place = $_GET['q'];	
+	$place = $_GET['q'];
+	if (!$place) {
+		echo "Usage: http://" . $_SERVER["HTTP_HOST"] . "/?q=Unique+Name+of+Business";
+		exit;
+	}	
 	$searchURL = PLACES_URL . urlencode($place);	
 	$searchResults = httpRequest($searchURL, 4, null, MOBILE_UA);
 	
@@ -83,12 +87,12 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 	}
 	$list = $dom->getElementById("universal");
 
+//	echo $dom->saveXML($list); exit;	// debug
+	
 	if (!$list) {
 		cantContinue($searchURL);
 	}
 
-//	echo $dom->saveXML($list); exit;	// debug
-	
 	// Definitely have something to run with now...
 	header("Cache-Control: max-age=300");	// cache 5 minutes
 	echo '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
@@ -98,22 +102,22 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 <title><?php echo $place; ?> reviews</title> 
 <meta name="viewport" content="width=device-width, initial-scale=1"> 
 <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.css" />
-<style>.m{font-weight:normal}</style>
+<style>.metadata{font-weight:normal}</style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 <script src="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.js"></script>
 </head><body> 
-<div data-theme="e" data-role="page" id="reviews">
+<div data-theme="a" data-role="page" id="reviews">
     <div data-role="content">
 		<ul data-role="listview">
 <?php
 	foreach ($list->childNodes as $review) {
-		// display only if there is a <div class="m">, which contains the 5* rating
+		// display only if there is a <div class="metadata">, which contains the 5* rating
 		if (get_class($review) != "DOMElement") continue;
 		$rating = null;
 		$website = null;
 		$components = $review->getElementsByTagName("div");
 		foreach ($components as $div) {
-			if ($div->getAttribute("class") == "m") {
+			if ($div->getAttribute("class") == "metadata") {
 				$rating = $dom->saveXML($div);
 				break;
 			}
@@ -123,9 +127,10 @@ define(MOBILE_UA, "NokiaN70-1/5.0705.3.0.1 Series60/2.8 Profile/MIDP-2.0 Configu
 		$reviewSite = $review->getElementsByTagName("a");
 		if (!$reviewSite) continue;
 		$reviewSite = $reviewSite->item(0)->getAttribute("href");
-		if (preg_match("#^/gwt/.*&u=(.*)$#", $reviewSite, $realURL)) {
+//		echo $reviewSite;	// debug
+		if (preg_match("#/gwt/x.*&u=([^&]+)#", $reviewSite, $realURL)) {
 			$reviewSite = urldecode($realURL[1]);
-		} else if (preg_match("#^/m/url.*&q=(.*)$#", $reviewSite, $realURL)) {
+		} else if (preg_match("#/url\?q=([^&]+)#", $reviewSite, $realURL)) {
 			$reviewSite = urldecode($realURL[1]);
 		}
 		preg_match("#http://([a-zA-Z0-9\-\.]+)#", $reviewSite, $realURL);
